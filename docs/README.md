@@ -4,7 +4,7 @@
 The final user interface is envisioned to have a textbox where the user enters a sentence.
 Below that the user can select the number of results he wants to see.
 
-When the user presses the ´FIND RESULTS´ the interface presentes a list of sentences which are semantically the closest to the input together with the document and information where in the document (SENTENCE NUMBER) the sentence was found.
+When the user presses the `FIND RESULTS` the interface presentes a list of sentences which are semantically the closest to the input together with the document and information where in the document (`SENTENCE NUMBER`) the sentence was found.
 
 ![User Interface Sketch](user_interface_sketch.png)
 
