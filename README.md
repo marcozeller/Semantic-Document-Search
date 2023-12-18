@@ -21,11 +21,25 @@ Checkout the
 [fastapi documentation](https://fastapi.tiangolo.com/#installation)
 for a step by step guide or if on your system other steps are required.
 
-To start the server use the script
+The application provides a REST API which you can write your own endpoints to.
+It is setup with the intention to be run localy on your computer.
+So we do not implement any authentification for the moment.
+It should however be possible to adapt the work and deploy it somewhere if that is what you want.
+
+A default frontend for the application is available.
+As the frontend as well as the API is served from the same host additional requirements need to be installed.
+Use the following commands to install the requirements and verify that the svelte template works.
+```bash
+cd front
+npm install
+```
+
+Verify if both the frontend and backend run.
+To start the development servers use the script
 ```bash
 ./start_server.sh
 ```
-or alternatively look the commands up in the script and run them manually.
+or alternatively look the commands up in the script and run them manually in separate terminals for a better developer experience.
 
 # Application Structure
 The structure of the application is somewhat unconventional as we decided to have the frontend (in Svelte) and the backend (with FastAPI) in the same repository.
