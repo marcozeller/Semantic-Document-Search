@@ -13,9 +13,9 @@
 	function get_table_from_data(sourceData: any[]) {
 		let tableSimple: TableSource = {
 			// A list of heading labels.
-			head: ['Document', 'Sequence Number', 'Sentence Content'],
+			head: ['Similarity Score', 'Document', 'Sentence Number', 'Sentence Content'],
 			// The data visibly shown in your table body UI.
-			body: tableMapperValues(sourceData, ['document', 'sentence_number', 'sentence_content']),
+			body: tableMapperValues(sourceData, ['distance', 'document', 'sentence_number', 'sentence_content']),
 			// Optional: The data returned when interactive is enabled and a row is clicked.
 			meta: tableMapperValues(sourceData, ['document_id', 'sentence_number'])
 			// Optional: A list of footer labels.
