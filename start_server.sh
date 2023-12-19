@@ -1,5 +1,6 @@
 #!/bin/bash
 
-uvicorn main:app --reload &
 cd front
-npm run dev
+npm run build:watch &
+cd ..
+uvicorn main:app --reload
