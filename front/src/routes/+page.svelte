@@ -3,62 +3,43 @@
 	import { Table, tableMapperValues } from '@skeletonlabs/skeleton';
 	import type { TableSource } from '@skeletonlabs/skeleton';
 
-	let value = 6;
-	let max = 25;
+    // Parameters for the slider to select the number of results
+	let number_results = 6;
+	let min_num_results = 1;
+	let max_num_results = 25;
 
-	const sourceData = [
-		{
-			position: 1,
-			document: 'Foxes',
-			sentence_number: 42,
-			sentence_content: 'The little fox jumbed over the fence.'
-		},
-		{
-			position: 2,
-			document: 'Lorem Ipsum',
-			sentence_number: 1,
-			sentence_content:
-				'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.'
-		},
-		{
-			position: 3,
-			document: 'Lorem Ipsum',
-			sentence_number: 2,
-			sentence_content:
-				'Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.'
-		},
-		{
-			position: 4,
-			document: 'Lorem Ipsum',
-			sentence_number: 3,
-			sentence_content:
-				'Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.'
-		},
-		{
-			position: 5,
-			document: 'Wikipedia - Language Model',
-			sentence_number: 1,
-			sentence_content: 'A language model is a probabilistic model of a natural language.'
-		},
-		{
-			position: 6,
-			document: 'Wikipedia - Language Model',
-			sentence_number: 101,
-			sentence_content:
-				'As autoregressive language models, they work by taking an input text and repeatedly predicting the next token or word.'
-		}
-	];
 
-	const tableSimple: TableSource = {
-		// A list of heading labels.
-		head: ['Document', 'Sequence Number', 'Sentence Content'],
-		// The data visibly shown in your table body UI.
-		body: tableMapperValues(sourceData, ['document', 'sentence_number', 'sentence_content']),
-		// Optional: The data returned when interactive is enabled and a row is clicked.
-		meta: tableMapperValues(sourceData, ['position', 'name', 'symbol', 'weight'])
-		// Optional: A list of footer labels.
-		//foot: ['Total', '', '<code class="code">6</code>']
-	};
+    // Function to crcreate thee table from the data
+	function get_table_from_data(sourceData: any[]) {
+		let tableSimple: TableSource = {
+			// A list of heading labels.
+			head: ['Document', 'Sequence Number', 'Sentence Content'],
+			// The data visibly shown in your table body UI.
+			body: tableMapperValues(sourceData, ['document', 'sentence_number', 'sentence_content']),
+			// Optional: The data returned when interactive is enabled and a row is clicked.
+			meta: tableMapperValues(sourceData, ['document_id', 'sentence_number'])
+			// Optional: A list of footer labels.
+			//foot: ['Total', '', '<code class="code">6</code>']
+		};
+		return tableSimple;
+	}
+
+    // Initialize table with empty data
+	let sourceData = [];
+	let tableSimple = get_table_from_data(sourceData);
+
+    // Get similar sentences from API when the button is clicked
+    // Show the results in the table
+	async function get_similar_documents() {
+		const sentence = document.querySelector('textarea').value;
+		const results = await fetch(
+			`/api/similar-sentences?sentence=${sentence}&number_results=${number_results}`
+		);
+		const resultsJson = await results.json();
+		sourceData = resultsJson;
+		tableSimple = get_table_from_data(sourceData);
+		//console.log(resultsJson);
+	}
 </script>
 
 <h1>Search for semantically similar sentences in the corpus:</h1>
@@ -66,15 +47,23 @@
 
 <div class="flex">
 	<div class="grow">
-		<RangeSlider name="range-slider" bind:value max={25} step={1} ticked>
+		<RangeSlider
+			name="range-slider"
+			bind:value={number_results}
+			min={min_num_results}
+			max={max_num_results}
+			step={1}
+			ticked
+		>
 			<div class="flex justify-between items-center">
 				<div class="font-bold">Show number of closest results</div>
-				<div class="text-xs">{value} / {max}</div>
+				<div class="text-xs">{number_results} / {max_num_results}</div>
 			</div>
 		</RangeSlider>
 	</div>
-<button type="button" class="btn variant-filled">Find Results</button>
+	<button type="button" class="btn variant-filled" on:click={() => get_similar_documents()}
+		>Find Results</button
+	>
 </div>
-
 
 <Table class="table-interactive" source={tableSimple} />
