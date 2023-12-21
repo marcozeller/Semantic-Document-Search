@@ -1,5 +1,5 @@
 from sentence_transformers import SentenceTransformer
-from torch import cosine_similarity, flatten
+from torch import dist, flatten
 model = SentenceTransformer('all-MiniLM-L6-v2')
 
 # https://en.wikipedia.org/wiki/Language_model
@@ -70,10 +70,15 @@ def get_similar_sentences(target_sentence, num_results=10):
     final_embeddings = model.encode(final_sentences, convert_to_tensor=True)
     target_embedding = flatten(final_embeddings[-1])
 
-    final_corpus = [{'sentence_content': sentence, 'document': doc, 'sentence_number': sentence_number, 'distance': abs(float(cosine_similarity(flatten(embedding), target_embedding, dim=0)))} for sentence, doc, sentence_number, embedding in zip(final_sentences, final_docs, final_sentence_numbers, final_embeddings)] 
+    final_corpus = [{'sentence_content': sentence,
+                     'document': doc,
+                     'sentence_number': sentence_number,
+                     'distance': float(dist(flatten(embedding), target_embedding))}
+                     for sentence, doc, sentence_number, embedding
+                     in zip(final_sentences, final_docs, final_sentence_numbers, final_embeddings)] 
 
 
-    final_corpus.sort(key=lambda x: x["distance"], reverse=True)
+    final_corpus.sort(key=lambda x: x["distance"], reverse=False)
 
     return final_corpus[:num_results]
 
