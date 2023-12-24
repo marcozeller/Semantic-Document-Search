@@ -16,17 +16,22 @@
 	</svelte:fragment>
 	<svelte:fragment slot="sidebarLeft">
 		<AppRail>
-			<AppRailAnchor href="{base}/" selected={$page.url.pathname === '/'}>(icon)</AppRailAnchor>
-			<AppRailAnchor href="{base}/sentence" selected={$page.url.pathname === '/sentence'}>(icon)</AppRailAnchor>
+			<AppRailAnchor href="{base}/" selected={$page.url.pathname === '/'}>(Query-Sentences-icon)</AppRailAnchor>
+			<AppRailAnchor href="{base}/sentence" selected={$page.url.pathname === '/sentence'}>(Sentence-Icon)</AppRailAnchor>
+			<AppRailAnchor href="{base}/file-manager" selected={$page.url.pathname === '/file-manager'}>(File-Manager-icon)</AppRailAnchor>
 		</AppRail>
 	</svelte:fragment>
 	<!--
 	<svelte:fragment slot="sidebarRight">Sidebar Right</svelte:fragment>
 	-->
+	<!--
 	<svelte:fragment slot="pageHeader">Page Header</svelte:fragment>
+	-->
 	<!-- Router Slot -->
 	<slot />
 	<!-- ---- / ---- -->
+	<!--
 	<svelte:fragment slot="pageFooter">Page Footer</svelte:fragment>
+	-->
 	<svelte:fragment slot="footer">Footer</svelte:fragment>
 </AppShell>

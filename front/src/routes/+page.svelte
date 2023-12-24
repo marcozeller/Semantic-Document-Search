@@ -8,7 +8,7 @@
 	let min_num_results = 1;
 	let max_num_results = 25;
 
-	// Function to crcreate thee table from the data
+	// Function to create the table from the data
 	function get_table_from_data(sourceData: any[]) {
 		let tableSimple: TableSource = {
 			// A list of heading labels.
@@ -29,7 +29,7 @@
 	}
 
 	// Initialize table with empty data
-	let sourceData = [];
+	let sourceData: any[] = [];
 	let tableSimple = get_table_from_data(sourceData);
 
 	// Get similar sentences from API when the button is clicked

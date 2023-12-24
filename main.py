@@ -4,8 +4,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import RedirectResponse
 from similarity_search import get_similar_sentences
-from os import path, getcwd, makedirs
+from os import path, getcwd, makedirs, listdir
 from shutil import copyfileobj
+from starlette.exceptions import HTTPException as StarletteHTTPException
+
+# Some parameters which might be useful to change
+# Directory where the documents are stored and loaded from for the search.
+DOCUMENTS_DIRECTORY = path.join(getcwd(), "documents")
 
 app = FastAPI()
 
@@ -22,11 +27,23 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.mount("/ui", StaticFiles(directory="front/build", html=True), name="ui")
+# In case the user navigates to a non-existing page, redirect to the front-end.
+class SPAStaticFiles(StaticFiles):
+    async def get_response(self, path: str, scope):
+        try: 
+            return await super().get_response(path, scope)
+        except (HTTPException, StarletteHTTPException) as ex:
+            if ex.status_code == 404:
+                #return await super().get_response('/', scope)
+                return RedirectResponse(url='/ui')
+            else:
+                raise ex
+
+app.mount("/ui", SPAStaticFiles(directory="front/build", html=True), name="ui")
 
 @app.get("/")
 async def front():
-    return RedirectResponse(url='ui')
+    return RedirectResponse(url='/ui')
 
 @app.get("/api/item/{item_id}")
 async def read_item(item_id: int, q: str = None):
@@ -38,6 +55,7 @@ async def similar_sentences(number_results: int = 10, sentence: str = "No senten
 
 @app.post("/api/file")
 async def create_upload_file(file: UploadFile):
+    upload_dir = DOCUMENTS_DIRECTORY
     # Inspired by: https://www.slingacademy.com/article/fastapi-how-to-upload-and-validate-files/
 
     # check the content type (MIME type)
@@ -45,7 +63,6 @@ async def create_upload_file(file: UploadFile):
     if content_type not in ["application/pdf"]:
         raise HTTPException(status_code=400, detail="Invalid file type")
 
-    upload_dir = path.join(getcwd(), "documents")
     # Create the upload directory if it doesn't exist
     if not path.exists(upload_dir):
         makedirs(upload_dir)
@@ -60,3 +77,16 @@ async def create_upload_file(file: UploadFile):
 
     return {"filename": file.filename}
 
+@app.get("/api/documents")
+async def similar_sentences():
+    documents_dir = DOCUMENTS_DIRECTORY
+    documents = listdir(documents_dir)
+
+    result = []
+
+    for i, document in enumerate(documents):
+        document_entry = {"title": document, "id": i}
+        result.append(document_entry)
+    
+    result = list(filter(lambda x: x["title"].endswith(".pdf"), result))
+    return result
