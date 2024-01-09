@@ -22,3 +22,21 @@ A less likely edge-case is that two non-identical sentences have the exact same 
 For our first proof-of-concept we do not define a behaviour for these cases.
 
 ![Architecture Sketch](architecture_sketch.png)
+
+## Preliminary Class Diagrams
+
+```mermaid
+classDiagram
+    class VectorDatabase{
+        -str path
+        +get_nearest_neighbors(embedding_vector, n_neighbors)
+        +build_index(content_database_path)
+    }
+
+    class ContentDatabase{
+        -str path
+        +get_sentence_data(identifier)
+        +add_sentence_data(document, sentence_number, sentence_content)
+    }
+
+```
