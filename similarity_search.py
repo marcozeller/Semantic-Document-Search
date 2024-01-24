@@ -2,6 +2,44 @@ from sentence_transformers import SentenceTransformer
 from torch import dist, flatten
 model = SentenceTransformer('all-MiniLM-L6-v2')
 
+
+# TODO: properly implement
+class VectorDatabase:
+    def __init__(self, path: str):
+        self._identifiers = []
+        self._vector_list = []
+
+    def store_vector(self, identifier: int, vector: list):
+        self._identifiers.append(identifier)
+        self._vector_list.append(vector)
+
+    def build_index(self):
+        pass
+
+    def get_nearest_neighbors_ids(self, embedding_vector, n_neighbors: int):
+        return self._identifiers[:n_neighbors]
+
+# TODO: properly implement
+class ContentDatabase:
+    def __init__(self, path: str):
+        self._identifiers = []
+        self._sentences = []
+
+    def get_next_free_id(self):
+        return 1 if len(self._identifiers) == 0 else max(self._identifiers) + 1
+
+    def store_sentence_data(self, identifier: int, sentence_content: str, document: str, sentence_number: int):
+        self._identifiers.append(identifier)
+        self._sentences.append({'document': document,
+                                'sentence_number': sentence_number,
+                                'sentence_content': sentence_content,
+                                'distance': 0.5 # TODO: this should not be derived from here...
+                                })
+
+    def get_sentence_data(self, identifier: int):
+        index = self._identifiers.index(identifier)
+        return self._sentences[index]
+
 def get_test_texts():
     # https://en.wikipedia.org/wiki/Language_model
     document1 = "Wikipedia Language Model"
@@ -80,6 +118,23 @@ def get_similar_sentences(target_sentence, num_results=10):
     final_embeddings = model.encode(final_sentences, convert_to_tensor=True)
     target_embedding = flatten(final_embeddings[-1])
 
+    vector_database = VectorDatabase('vector_database.vec')
+    content_database = ContentDatabase('content_database.db')
+
+    for sentence, doc, sentence_number, embedding in zip(final_sentences, final_docs, final_sentence_numbers, final_embeddings):
+        identifier = content_database.get_next_free_id()
+
+        vector_database.store_vector(identifier, embedding)
+        content_database.store_sentence_data(identifier, sentence, doc, sentence_number)
+    
+    vector_database.build_index()
+    nearest_neighbors_ids = vector_database.get_nearest_neighbors_ids(target_embedding, num_results)
+
+    sentences_data = [content_database.get_sentence_data(identifier) for identifier in nearest_neighbors_ids]
+
+    return sentences_data
+
+    """
     final_corpus = [{'sentence_content': sentence,
                      'document': doc,
                      'sentence_number': sentence_number,
@@ -91,6 +146,7 @@ def get_similar_sentences(target_sentence, num_results=10):
     final_corpus.sort(key=lambda x: x["distance"], reverse=False)
 
     return final_corpus[:num_results]
+    """
 
 if __name__ == "__main__":
     test_sentence = "The fox is a lovely animal."
