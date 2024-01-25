@@ -1,23 +1,30 @@
 from sentence_transformers import SentenceTransformer
+import numpy as np
 from torch import dist, flatten
+from faiss import IndexIDMap, IndexFlatL2
 model = SentenceTransformer('all-MiniLM-L6-v2')
 
+DIMENSION = 384 # TODO: Magic number to make it work for the example data fix at max later and add padding where necessary
 
 # TODO: properly implement
 class VectorDatabase:
     def __init__(self, path: str):
-        self._identifiers = []
-        self._vector_list = []
+        self._index = IndexIDMap(IndexFlatL2(DIMENSION))
 
     def store_vector(self, identifier: int, vector: list):
-        self._identifiers.append(identifier)
-        self._vector_list.append(vector)
+        self._index.add_with_ids(np.array([vector]), np.array([identifier]))
 
     def build_index(self):
-        pass
+        if self._index.is_trained:
+            print("Index is already trained")
+        else:
+            print("Training index...")
+            self._index.train(self._vector_list)
+            print("Index trained")
 
     def get_nearest_neighbors_ids(self, embedding_vector, n_neighbors: int):
-        return self._identifiers[:n_neighbors]
+        D, I = self._index.search(np.array([embedding_vector]), n_neighbors)
+        return I[0]
 
 # TODO: properly implement
 class ContentDatabase:
