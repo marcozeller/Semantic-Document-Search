@@ -1,17 +1,22 @@
+from test_and_debug_utils import get_test_texts
 from sentence_transformers import SentenceTransformer
 import numpy as np
 from torch import dist, flatten
 from faiss import IndexIDMap, IndexFlatL2
-model = SentenceTransformer('all-MiniLM-L6-v2')
 
-DIMENSION = 384 # TODO: Magic number to make it work for the example data fix at max later and add padding where necessary
+config = {
+    'model': 'all-MiniLM-L6-v2',
+    'dimension': 384,
+}
+
+model = SentenceTransformer(config['model'])
 
 # TODO: properly implement
 class VectorDatabase:
     def __init__(self, path: str):
-        self._index = IndexIDMap(IndexFlatL2(DIMENSION))
+        self._index = IndexIDMap(IndexFlatL2(config['dimension']))
 
-    def store_vector(self, identifier: int, vector: list):
+    def store_vector(self, identifier: int, vector: np.ndarray):
         self._index.add_with_ids(np.array([vector]), np.array([identifier]))
 
     def build_index(self):
@@ -46,48 +51,6 @@ class ContentDatabase:
     def get_sentence_data(self, identifier: int):
         index = self._identifiers.index(identifier)
         return self._sentences[index]
-
-def get_test_texts():
-    # https://en.wikipedia.org/wiki/Language_model
-    document1 = "Wikipedia Language Model"
-
-    test_text1 = """
-    A language model is a probabilistic model of a natural language.[1] In 1980, the first significant statistical language model was proposed, and during the decade IBM performed ‘Shannon-style’ experiments, in which potential sources for language modeling improvement were identified by observing and analyzing the performance of human subjects in predicting or correcting text.[2]
-    Language models are useful for a variety of tasks, including speech recognition[3] (helping prevent predictions of low-probability (e.g. nonsense) sequences), machine translation,[4] natural language generation (generating more human-like text), optical character recognition, handwriting recognition,[5] grammar induction,[6] and information retrieval.[7][8]
-    Large language models, currently their most advanced form, are a combination of larger datasets (frequently using scraped words from the public internet), feedforward neural networks, and transformers. They have superseded recurrent neural network-based models, which had previously superseded the pure statistical models, such as word n-gram language model|. "
-    """
-
-    # https://en.wikipedia.org/wiki/Fox
-    document2 = "Wikipedia Fox"
-
-    test_text2 = """
-    Foxes are small to medium-sized, omnivorous mammals belonging to several genera of the family Canidae. They have a flattened skull, upright, triangular ears, a pointed, slightly upturned snout, and a long bushy tail ("brush").
-    Twelve species belong to the monophyletic "true fox" group of genus Vulpes. Approximately another 25 current or extinct species are always or sometimes called foxes; these foxes are either part of the paraphyletic group of the South American foxes, or of the outlying group, which consists of the bat-eared fox, gray fox, and island fox.[1]
-    Foxes live on every continent except Antarctica. The most common and widespread species of fox is the red fox (Vulpes vulpes) with about 47 recognized subspecies.[2] The global distribution of foxes, together with their widespread reputation for cunning, has contributed to their prominence in popular culture and folklore in many societies around the world. The hunting of foxes with packs of hounds, long an established pursuit in Europe, especially in the British Isles, was exported by European settlers to various parts of the New World.
-    """
-
-    # https://en.wikipedia.org/wiki/Lorem_ipsum
-    document3 = "Wikipedia Lorem Ipsum"
-
-    test_text3 = """
-    A common form of Lorem ipsum reads:
-    Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
-    """
-
-    # https://en.wikipedia.org/wiki/Mountain
-    document4 = "Mountain"
-
-    test_text4 = """
-    A mountain is an elevated portion of the Earth's crust, generally with steep sides that show significant exposed bedrock. Although definitions vary, a mountain may differ from a plateau in having a limited summit area, and is usually higher than a hill, typically rising at least 300 metres (980 ft) above the surrounding land. A few mountains are isolated summits, but most occur in mountain ranges.[1]
-    Mountains are formed through tectonic forces, erosion, or volcanism,[1] which act on time scales of up to tens of millions of years.[2] Once mountain building ceases, mountains are slowly leveled through the action of weathering, through slumping and other forms of mass wasting, as well as through erosion by rivers and glaciers.[3]
-    High elevations on mountains produce colder climates than at sea level at similar latitude. These colder climates strongly affect the ecosystems of mountains: different elevations have different plants and animals. Because of the less hospitable terrain and climate, mountains tend to be used less for agriculture and more for resource extraction, such as mining and logging, along with recreation, such as mountain climbing and skiing.
-    The highest mountain on Earth is Mount Everest in the Himalayas of Asia, whose summit is 8,850 m (29,035 ft) above mean sea level. The highest known mountain on any planet in the Solar System is Olympus Mons on Mars at 21,171 m (69,459 ft).
-    """
-
-    documents = [document1, document2, document3, document4]
-    texts = [test_text1, test_text2, test_text3, test_text4]
-
-    return documents, texts
 
 def clean_texts(documents, texts):
     # Clean texts
