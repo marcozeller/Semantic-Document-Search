@@ -47,6 +47,15 @@ This was a concious decision for didactic purposes and to ensure everything was 
 [This article](https://phillyharper.medium.com/svelte-fastapi-hello-world-2d545b901a34)
 primary inspiration for the structure.
 
+# How to Run
+* Install as described above
+* the `./start_server.sh` script assumes that your virtual environment is installed in `.venv` inside the root-folder change the script such that it fits how you installed it or start the server manually
+* the current implementation has some limitations which will gradually be alliviated
+    * files can be "uploaded" through the web-UI (only .pdfs for now) or stored directly under `./documents/`
+    * before they can be queried the script/module `similarity_search.py` needs to be run on its own
+    * the script currently deletes and completly rebuilds the databases in a naiive way depending on the number and size of documents this will take a long time
+    * only after building the database it is possible to use the application as all queries only use the databases.
+
 # Additional Sources
 * [Paper: Sentence-BERT](https://arxiv.org/abs/1908.10084)
 * [Youtube: Sentence-BERT explained](https://www.youtube.com/watch?v=FpUzooAD-a8)
