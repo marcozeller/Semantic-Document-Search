@@ -3,12 +3,13 @@
 	import { Table, tableMapperValues } from '@skeletonlabs/skeleton';
 	import type { TableSource } from '@skeletonlabs/skeleton';
 	import { FileDropzone } from '@skeletonlabs/skeleton';
+	import { base } from '$app/paths';
 
 	function get_table_from_data(sourceData: any[]): TableSource {
 		const tableSimple: TableSource = {
-			head: ['ID', 'Document Title'],
-			body: tableMapperValues(sourceData, ['id', 'title']),
-			meta: tableMapperValues(sourceData, ['id', 'title'])
+			head: ['ID', 'Document Title', 'Path on System'],
+			body: tableMapperValues(sourceData, ['identifier', 'title', 'path']),
+			meta: tableMapperValues(sourceData, ['identifier', 'title', 'path'])
 		};
 		return tableSimple;
 	}
@@ -26,23 +27,29 @@
 			});
 	});
 
-	function open_document_view() {
-		console.log('open document view');
+	function open_document_view(e: Event) {
+		if(e.detail[0] == null){
+			return;
+		}
+		window.location.replace(base + '/document/?id=' + e.detail[0]);
 	}
 
-    async function upload_file(event: Event) {
-        const file = event.target.files[0];
-        const formData = new FormData();
-        formData.append("file", file);
+	async function upload_file(event: Event) {
+		if (event.target == null || event.target.files == null) {
+			return;
+		}
+		const file = event.target.files[0];
+		const formData = new FormData();
+		formData.append('file', file);
 
-        const response = await fetch("/api/file", {
-            method: "POST",
-            body: formData,
-        });
+		const response = await fetch('/api/file', {
+			method: 'POST',
+			body: formData
+		});
 
-        const data = await response.json();
-        console.log(data);
-    }
+		const data = await response.json();
+		console.log(data);
+	}
 </script>
 
 <div class="container mx-auto space-y-8 p-8">
@@ -51,7 +58,7 @@
 	<Table
 		class="table-interactive"
 		interactive={true}
-		on:selected={() => open_document_view()}
+		on:selected={open_document_view}
 		source={tableSimple}
 	/>
 

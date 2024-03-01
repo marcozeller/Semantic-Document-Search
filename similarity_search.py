@@ -6,6 +6,7 @@ from faiss import IndexIDMap, IndexFlatL2, read_index, write_index
 from os import path, getcwd, makedirs, listdir, remove
 from PyPDF2 import PdfReader
 from sqlite3 import connect
+import nltk
 
 DOCUMENTS_DIRECTORY = path.join(getcwd(), 'documents')
 DATABASES_DIRECTORY = path.join(getcwd(), 'databases')
@@ -94,6 +95,13 @@ class ContentDatabase:
         self._con.commit()
         cur.close()
 
+    def get_documents_in_db(self):
+        cur = self._con.cursor()
+        res = cur.execute("SELECT id, title, path FROM document")
+        documents = res.fetchall()
+        cur.close()
+        return documents
+
     def get_next_free_id(self):
         cur = self._con.cursor()
         res = cur.execute("SELECT max(id) from sentence")
@@ -120,6 +128,20 @@ class ContentDatabase:
                 'sentence_number': sentence_number,
                 'sentence_content': content,
                 }
+
+    def get_sentences_by_document_id(self, document_id: int):
+        cur = self._con.cursor()
+        res = cur.execute("SELECT id, document_id, sentence_number, content FROM sentence WHERE document_id = ? ORDER BY sentence_number", (document_id,))
+        sentences = res.fetchall()
+        result = []
+        for id, document_id, sentence_number, content  in sentences:
+            result.append({'id': id,
+                           'document_id': document_id,
+                           'sentence_number': sentence_number,
+                           'content': content
+                           })
+        cur.close()
+        return result
 
 # Read text from a pdf file
 def read_pdf(file_path):
@@ -182,7 +204,8 @@ def rebuild_databases(content_db_name, vector_db_name, delete_databases):
 
     for doc_id, (doc_title, doc_path, doc_content) in enumerate(zip(file_names, file_paths, texts)):
         document_metadata.append((doc_id, doc_title, doc_path))
-        sentences = doc_content.split(".")
+        sentences = nltk.sent_tokenize(doc_content)
+        #sentences = doc_content.split(".")
         for sentence_number, sentence in enumerate(sentences):
             if len(sentence) > 10:
                 final_sentences.append(sentence)
@@ -221,19 +244,20 @@ def get_similar_sentences(target_sentence, num_results=10):
 
     return sentences_data
 
-    """
-    final_corpus = [{'sentence_content': sentence,
-                     'document': doc,
-                     'sentence_number': sentence_number,
-                     'distance': float(dist(flatten(embedding), target_embedding))}
-                     for sentence, doc, sentence_number, embedding
-                     in zip(final_sentences, final_docs, final_sentence_numbers, final_embeddings)] 
+def get_documents_in_db():
+    content_database = ContentDatabase('content_database.db')
+    documents_in_db = content_database.get_documents_in_db()
+    result = []
+    for identifier, title, path in documents_in_db:
+        document_entry = { "identifier": identifier, "title": title, "path": path}
+        result.append(document_entry)
 
+    return result
 
-    final_corpus.sort(key=lambda x: x["distance"], reverse=False)
-
-    return final_corpus[:num_results]
-    """
+def get_document_content_by_id(document_id):
+    content_database = ContentDatabase('content_database.db')
+    sentences = content_database.get_sentences_by_document_id(document_id)
+    return sentences
 
 if __name__ == "__main__":
     rebuild_databases('content_database.db', 'vector_database.vec', True)

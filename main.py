@@ -3,7 +3,7 @@ from fastapi.exceptions import HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import RedirectResponse
-from similarity_search import get_similar_sentences
+from similarity_search import get_similar_sentences, get_documents_in_db, get_document_content_by_id
 from os import path, getcwd, makedirs, listdir
 from shutil import copyfileobj
 from starlette.exceptions import HTTPException as StarletteHTTPException
@@ -45,9 +45,9 @@ app.mount("/ui", SPAStaticFiles(directory="front/build", html=True), name="ui")
 async def front():
     return RedirectResponse(url='/ui')
 
-@app.get("/api/item/{item_id}")
-async def read_item(item_id: int, q: str = None):
-    return {"item_id": item_id, "q": q}
+@app.get("/api/document/{document_id}")
+async def read_item(document_id: int):
+    return get_document_content_by_id(document_id)
 
 @app.get("/api/similar-sentences")
 async def similar_sentences(number_results: int = 10, sentence: str = "No sentence provided"):
@@ -78,15 +78,28 @@ async def create_upload_file(file: UploadFile):
     return {"filename": file.filename}
 
 @app.get("/api/documents")
-async def similar_sentences():
+async def get_available_documents():
     documents_dir = DOCUMENTS_DIRECTORY
-    documents = listdir(documents_dir)
+    stored_documents = listdir(documents_dir) # Get all files in the directory
+    stored_documents = filter(lambda x: x.endswith(".pdf"), stored_documents) # Filter for PDFs
+    stored_documents = map(lambda d: path.join(DOCUMENTS_DIRECTORY, d), stored_documents)
+    stored_documents = list(stored_documents)
+
+    documents_in_db = get_documents_in_db()
+    paths_in_db = {d['path'] for d in documents_in_db}
 
     result = []
 
-    for i, document in enumerate(documents):
-        document_entry = {"title": document, "id": i}
+    for document_path in stored_documents:
+        if document_path in paths_in_db:
+            continue
+        document_entry = {"identifier": None, "title": None, "path": document_path}
         result.append(document_entry)
     
-    result = list(filter(lambda x: x["title"].endswith(".pdf"), result))
+    # Remove documents which are already in the database
+    result = list(filter(lambda x: x["path"] not in documents_in_db, result))
+    # Add the documents which are already in the database with their addtionial information
+    result += documents_in_db
+    
     return result
+
