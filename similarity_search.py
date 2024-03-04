@@ -18,7 +18,7 @@ config = {
 
 model = SentenceTransformer(config['model'])
 
-# TODO: properly implement
+# TODO: properly encapsulate the VectorDatabase
 class VectorDatabase:
     def __init__(self, index_name: str):
         index_directory = DATABASES_DIRECTORY
@@ -56,7 +56,7 @@ class VectorDatabase:
         D, I = self._index.search(np.array([embedding_vector]), n_neighbors)
         return I[0], D[0]
 
-# TODO: properly implement
+# TODO: properly encapsulate the ContentDatabase
 class ContentDatabase:
     def __init__(self, database_name: str):
         database_directory = DATABASES_DIRECTORY
@@ -188,11 +188,14 @@ def read_pdfs_and_get_texts():
 
 def rebuild_databases(content_db_name, vector_db_name, delete_databases):
     if delete_databases:
+        # remove database files only if they already exist
         content_db_path = path.join(DATABASES_DIRECTORY, content_db_name)
-        remove(content_db_path)
+        if path.isfile(content_db_path):
+            remove(content_db_path)
 
         vector_db_path = path.join(DATABASES_DIRECTORY, vector_db_name)
-        remove(vector_db_path)
+        if path.isfile(vector_db_path):
+            remove(vector_db_path)
         
     file_paths, file_names, texts = read_pdfs_and_get_texts()
     texts = clean_texts(file_names, texts)
