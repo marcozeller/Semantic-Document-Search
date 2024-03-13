@@ -16,9 +16,6 @@ class ContentDatabase:
         self._con = connect(self._database_path)
         self._initialize_database()
 
-        self._identifiers = []
-        self._sentences = []
-
     def _initialize_database(self):
         cur = self._con.cursor()
         # check if database is already setup
@@ -49,6 +46,10 @@ class ContentDatabase:
         return documents
 
     def get_next_free_id(self):
+        """
+        Returns the next free identifier in the database.
+        Any identifier larger or equal than the one returned is guaranteed to be free.
+        """
         cur = self._con.cursor()
         res = cur.execute("SELECT max(id) from sentence")
         (max_identifier,) = res.fetchone()

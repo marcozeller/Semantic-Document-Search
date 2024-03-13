@@ -1,57 +1,19 @@
 from test_and_debug_utils import get_test_texts
 from sentence_transformers import SentenceTransformer
-from os import path, listdir, remove
-from PyPDF2 import PdfReader
+from os import path, remove
 import nltk
 
-from config import DOCUMENTS_DIRECTORY, DATABASES_DIRECTORY, model_config
+from config import DATABASES_DIRECTORY, model_config
 from vector_database import VectorDatabase
 from content_database import ContentDatabase
+from document_reader import read_pdfs_and_get_texts
 
 model = SentenceTransformer(model_config['model'])
 
-# Read text from a pdf file
-def read_pdf(file_path):
-    pdf_file = open(file_path, 'rb')
-    read_pdf = PdfReader(pdf_file)
-    number_of_pages = len(read_pdf.pages)
-    text = []
-    for page_number in range(number_of_pages):
-        page = read_pdf.pages[page_number]
-        page_content = page.extract_text()
-        text.append(page_content)
-    return " ".join(text)
 
-def clean_texts(documents, texts):
-    # Clean texts
-    for i in range(len(documents)):
-        text = texts[i]
-        # replace new line with space
-        text = text.replace('\n', ' ')
-        # replace multiple spaces with one space
-        text = ' '.join(text.split())
-        # reassemble splitted words
-        text = text.replace('- ', '')
-
-        texts[i] = text
-    
-    return texts
-
-def read_pdfs_and_get_texts():
-    file_names = []
-    file_paths = []
-    texts = []
-    for file_name in listdir(DOCUMENTS_DIRECTORY):
-        if not file_name.endswith('.pdf'):
-            continue
-        print(file_name)
-        file_path = path.join(DOCUMENTS_DIRECTORY, file_name)
-
-        file_paths.append(file_path)
-        file_names.append(file_name)
-        texts.append(read_pdf(file_path))
-    
-    return file_paths, file_names, texts
+###################################################################################################
+### Build the Databases ###########################################################################
+###################################################################################################
 
 def rebuild_databases(content_db_name, vector_db_name, delete_databases):
     if delete_databases:
@@ -65,7 +27,6 @@ def rebuild_databases(content_db_name, vector_db_name, delete_databases):
             remove(vector_db_path)
         
     file_paths, file_names, texts = read_pdfs_and_get_texts()
-    texts = clean_texts(file_names, texts)
 
     final_sentences = []
     final_doc_ids = []
@@ -99,6 +60,9 @@ def rebuild_databases(content_db_name, vector_db_name, delete_databases):
     vector_database.build_index()
     vector_database.save_database_to_disk()
 
+###################################################################################################
+### Query the existing data from the databases ####################################################
+###################################################################################################
    
 def get_similar_sentences(target_sentence, num_results=10):
     target_embedding = model.encode(target_sentence, convert_to_tensor=True)
