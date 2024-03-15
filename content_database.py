@@ -1,5 +1,6 @@
 from os import path, makedirs
 from sqlite3 import connect
+from typing import List
 
 from config import DATABASES_DIRECTORY
 
@@ -54,6 +55,23 @@ class ContentDatabase:
         res = cur.execute("SELECT max(id) from sentence")
         (max_identifier,) = res.fetchone()
         return max_identifier + 1 if max_identifier is not None else 1
+
+    def get_next_free_ids(self, n_ids: int):
+        """
+        Returns a list of length specified in the parameter of free identifiers.
+        There is no lock on the identifiers, so they might be taken by another process in the meantime.
+        """
+        # TODO: In a multiple user scenario (which we do not have yet), inserting into both databases needs to be atomic.
+        # Implement locking accross all components as database transactions alone will not be enough to guarantee consistency.
+
+        cur = self._con.cursor()
+        res = cur.execute("SELECT max(id) from sentence")
+        (max_identifier,) = res.fetchone()
+
+        # start id might not be the first free id, but any id higher or equal to it is guaranteed to be free
+        start_id = max_identifier + 1 if max_identifier is not None else 1
+        
+        return [start_id + i for i in range(n_ids)]
     
     def store_document_data(self, identifier: int, title: str, path: str):
         cur = self._con.cursor()
@@ -64,6 +82,12 @@ class ContentDatabase:
     def store_sentence_data(self, identifier: int, sentence_content: str, document_id: str, sentence_number: int):
         cur = self._con.cursor()
         cur.execute("INSERT INTO sentence VALUES (?, ?, ?, ?)", (identifier, document_id, sentence_number, sentence_content))
+        self._con.commit()
+        cur.close()
+
+    def store_sentence_data_batch(self, identifiers: List[int], sentence_contents: List[str], document_ids: List[str], sentence_numbers: List[int]):
+        cur = self._con.cursor()
+        cur.executemany("INSERT INTO sentence VALUES (?, ?, ?, ?)", list(zip(identifiers, document_ids, sentence_numbers, sentence_contents)))
         self._con.commit()
         cur.close()
 

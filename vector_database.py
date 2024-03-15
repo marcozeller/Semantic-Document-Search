@@ -1,6 +1,7 @@
 import numpy as np
 from os import path, makedirs
 from faiss import IndexIDMap, IndexFlatL2, read_index, write_index
+from typing import List
 
 from config import DATABASES_DIRECTORY, model_config
 
@@ -23,6 +24,9 @@ class VectorDatabase:
 
     def store_vector(self, identifier: int, vector: np.ndarray):
         self._index.add_with_ids(np.array([vector]), np.array([identifier]))
+
+    def store_vectors(self, identifiers: List[int], vectors: np.ndarray):
+        self._index.add_with_ids(np.array(vectors), np.array(identifiers))
     
     def build_index(self):
         if self._index.is_trained:

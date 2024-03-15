@@ -28,6 +28,8 @@ def rebuild_databases(content_db_name, vector_db_name, delete_databases):
         
     file_paths, file_names, texts = read_pdfs_and_get_texts()
 
+    #sentences = [nltk.sent_tokenize(full_text) for full_text in texts]
+
     final_sentences = []
     final_doc_ids = []
     final_sentence_numbers = []
@@ -48,15 +50,15 @@ def rebuild_databases(content_db_name, vector_db_name, delete_databases):
     vector_database = VectorDatabase('vector_database.vec')
     content_database = ContentDatabase('content_database.db')
 
-    # comment in to build database when run the first time
     for doc_id, doc_title, doc_path in document_metadata:
         content_database.store_document_data(doc_id, doc_title, doc_path)
 
-    for sentence, doc_id, sentence_number, embedding in zip(final_sentences, final_doc_ids, final_sentence_numbers, final_embeddings):
-        identifier = content_database.get_next_free_id()
+    #for sentence, doc_id, sentence_number, embedding in zip(final_sentences, final_doc_ids, final_sentence_numbers, final_embeddings):
 
-        vector_database.store_vector(identifier, embedding)
-        content_database.store_sentence_data(identifier, sentence, doc_id, sentence_number)
+    identifiers = content_database.get_next_free_ids(len(final_sentences))
+
+    vector_database.store_vectors(identifiers, final_embeddings)
+    content_database.store_sentence_data_batch(identifiers, final_sentences, final_doc_ids, final_sentence_numbers)
     vector_database.build_index()
     vector_database.save_database_to_disk()
 

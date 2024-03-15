@@ -6,28 +6,22 @@ from os import path, listdir
 def read_pdf(file_path):
     pdf_file = open(file_path, 'rb')
     read_pdf = PdfReader(pdf_file)
-    number_of_pages = len(read_pdf.pages)
-    text = []
-    for page_number in range(number_of_pages):
-        page = read_pdf.pages[page_number]
-        page_content = page.extract_text()
-        text.append(page_content)
-    return " ".join(text)
+    
+    # concatenate all pages' text
+    full_text = " ".join([page.extract_text() for page in read_pdf.pages])
+
+    return full_text
 
 def clean_texts(texts):
-    cleaned_texts = []
-    # Clean texts
-    for text in texts:
-        cleaned_text = text
-        # replace new line with space
-        cleaned_text = cleaned_text.replace('\n', ' ')
-        # replace multiple spaces with one space
-        cleaned_text = ' '.join(cleaned_text.split())
-        # reassemble splitted words
-        cleaned_text = cleaned_text.replace('- ', '')
-        cleaned_texts.append(cleaned_text)
+    cleaned_texts = texts
+    # replace new line with space
+    cleaned_texts = map(lambda text: text.replace('\n', ' '), cleaned_texts)
+    # replace multiple spaces with one space
+    cleaned_texts = map(lambda text: ' '.join(text.split()), cleaned_texts)
+    # reassemble splitted words
+    cleaned_texts = map(lambda text: text.replace('- ', ''), cleaned_texts)
 
-    return cleaned_texts
+    return list(cleaned_texts)
 
 ###################################################################################################
 ### Read and Process the Files ####################################################################
@@ -48,3 +42,6 @@ def read_pdfs_and_get_texts():
         texts.append(read_pdf(file_path))
     
     return file_paths, file_names, clean_texts(texts)
+
+if __name__ == '__main__':
+    _, _, texts = read_pdfs_and_get_texts()
