@@ -1,9 +1,10 @@
 from PyPDF2 import PdfReader
 from config import DOCUMENTS_DIRECTORY
 from os import path, listdir
+from typing import List, Tuple
 
 # Read text from a pdf file
-def read_pdf(file_path):
+def read_pdf(file_path: str) -> str:
     pdf_file = open(file_path, 'rb')
     read_pdf = PdfReader(pdf_file)
     
@@ -12,7 +13,7 @@ def read_pdf(file_path):
 
     return full_text
 
-def clean_texts(texts):
+def clean_texts(texts: List[str]) -> List[str]:
     cleaned_texts = texts
     # replace new line with space
     cleaned_texts = map(lambda text: text.replace('\n', ' '), cleaned_texts)
@@ -27,7 +28,7 @@ def clean_texts(texts):
 ### Read and Process the Files ####################################################################
 ###################################################################################################
 
-def read_pdfs_and_get_texts():
+def read_pdfs_and_get_texts() -> Tuple[List[str], List[str], List[str]]:
     file_names = []
     file_paths = []
     texts = []

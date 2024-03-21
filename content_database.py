@@ -17,7 +17,7 @@ class ContentDatabase:
         self._con = connect(self._database_path)
         self._initialize_database()
 
-    def _initialize_database(self):
+    def _initialize_database(self) -> None:
         cur = self._con.cursor()
         # check if database is already setup
         required_tables = ['document', 'sentence']
@@ -46,7 +46,7 @@ class ContentDatabase:
         cur.close()
         return documents
 
-    def get_next_free_id(self):
+    def get_next_free_id(self) -> int:
         """
         Returns the next free identifier in the database.
         Any identifier larger or equal than the one returned is guaranteed to be free.
@@ -56,7 +56,7 @@ class ContentDatabase:
         (max_identifier,) = res.fetchone()
         return max_identifier + 1 if max_identifier is not None else 1
 
-    def get_next_free_ids(self, n_ids: int):
+    def get_next_free_ids(self, n_ids: int) -> List[int]:
         """
         Returns a list of length specified in the parameter of free identifiers.
         There is no lock on the identifiers, so they might be taken by another process in the meantime.
@@ -93,23 +93,24 @@ class ContentDatabase:
 
     def get_sentence_data(self, identifier: int):
         cur = self._con.cursor()
-        res = cur.execute("SELECT d.title, s.sentence_number, s.content FROM sentence s LEFT JOIN document d ON s.document_id = d.id WHERE s.id = ?", (identifier,))
-        document, sentence_number, content = res.fetchone()
-        return {'document': document,
+        res = cur.execute("SELECT s.document_id, d.title, s.sentence_number, s.content FROM sentence s LEFT JOIN document d ON s.document_id = d.id WHERE s.id = ?", (identifier,))
+        document_id, document, sentence_number, content = res.fetchone()
+        return {'id': identifier,
+                'document_id': document_id,
+                'document': document,
                 'sentence_number': sentence_number,
                 'sentence_content': content,
                 }
 
-    def get_sentences_by_document_id(self, document_id: int):
+    def get_sentences_by_document_id(self, document_id: int) -> List[dict]:
         cur = self._con.cursor()
-        res = cur.execute("SELECT id, document_id, sentence_number, content FROM sentence WHERE document_id = ? ORDER BY sentence_number", (document_id,))
+        res = cur.execute("SELECT id, sentence_number, content FROM sentence WHERE document_id = ? ORDER BY sentence_number", (document_id,))
         sentences = res.fetchall()
-        result = []
-        for id, document_id, sentence_number, content  in sentences:
-            result.append({'id': id,
-                           'document_id': document_id,
-                           'sentence_number': sentence_number,
-                           'content': content
-                           })
+        result = [{'id': id,
+                   'document_id': document_id,
+                   'sentence_number': sentence_number,
+                   'content': content
+                  }
+                 for id, sentence_number, content  in sentences]
         cur.close()
         return result

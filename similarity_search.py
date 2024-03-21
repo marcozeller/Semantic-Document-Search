@@ -1,4 +1,3 @@
-from test_and_debug_utils import get_test_texts
 from sentence_transformers import SentenceTransformer
 from os import path, remove
 import nltk
@@ -7,6 +6,8 @@ from config import DATABASES_DIRECTORY, model_config
 from vector_database import VectorDatabase
 from content_database import ContentDatabase
 from document_reader import read_pdfs_and_get_texts
+
+from typing import List
 
 model = SentenceTransformer(model_config['model'])
 
@@ -66,7 +67,7 @@ def rebuild_databases(content_db_name, vector_db_name, delete_databases):
 ### Query the existing data from the databases ####################################################
 ###################################################################################################
    
-def get_similar_sentences(target_sentence, num_results=10):
+def get_similar_sentences(target_sentence: str, num_results: int =10):
     target_embedding = model.encode(target_sentence, convert_to_tensor=True)
 
     vector_database = VectorDatabase('vector_database.vec')
@@ -75,12 +76,13 @@ def get_similar_sentences(target_sentence, num_results=10):
     nearest_neighbors_ids, nearest_neighbors_distances = vector_database.get_nearest_neighbors_ids_and_distances(target_embedding, num_results)
 
     sentences_data = [content_database.get_sentence_data(int(identifier)) for identifier in nearest_neighbors_ids]
-    for sentence_data, nn_dist in zip(sentences_data, nearest_neighbors_distances):
+    for sentence_data, nn_id, nn_dist in zip(sentences_data, nearest_neighbors_ids, nearest_neighbors_distances):
+        sentence_data['id'] = float(nn_id)
         sentence_data['distance'] = float(nn_dist)
 
     return sentences_data
 
-def get_documents_in_db():
+def get_documents_in_db() -> List[dict]:
     content_database = ContentDatabase('content_database.db')
     documents_in_db = content_database.get_documents_in_db()
     result = []
@@ -90,7 +92,7 @@ def get_documents_in_db():
 
     return result
 
-def get_document_content_by_id(document_id):
+def get_document_content_by_id(document_id) -> List[dict]:
     content_database = ContentDatabase('content_database.db')
     sentences = content_database.get_sentences_by_document_id(document_id)
     return sentences
