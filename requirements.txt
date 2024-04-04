@@ -1,4 +1,6 @@
+altair==5.2.0
 beautifulsoup4==4.12.3
+d3graph==2.5.0
 faiss_cpu==1.7.4
 fastapi==0.105.0
 html2text==2024.2.26
