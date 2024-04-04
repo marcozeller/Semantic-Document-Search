@@ -8,6 +8,7 @@ from content_database import ContentDatabase
 from document_reader import read_pdfs_and_get_texts
 
 from typing import List
+from interfaces import Document, DBDocument, Sentence, SimilarSentence
 
 model = SentenceTransformer(model_config['model'])
 
@@ -16,7 +17,7 @@ model = SentenceTransformer(model_config['model'])
 ### Build the Databases ###########################################################################
 ###################################################################################################
 
-def rebuild_databases(content_db_name, vector_db_name, delete_databases):
+def rebuild_databases(content_db_name: str, vector_db_name: str, delete_databases: bool = False) -> None:
     if delete_databases:
         # remove database files only if they already exist
         content_db_path = path.join(DATABASES_DIRECTORY, content_db_name)
@@ -34,10 +35,10 @@ def rebuild_databases(content_db_name, vector_db_name, delete_databases):
     final_sentences = []
     final_doc_ids = []
     final_sentence_numbers = []
-    document_metadata = []
+    documents = []
 
     for doc_id, (doc_title, doc_path, doc_content) in enumerate(zip(file_names, file_paths, texts)):
-        document_metadata.append((doc_id, doc_title, doc_path))
+        documents.append(Document(id=doc_id, title=doc_title, path=doc_path))
         sentences = nltk.sent_tokenize(doc_content)
         #sentences = doc_content.split(".")
         for sentence_number, sentence in enumerate(sentences):
@@ -51,8 +52,8 @@ def rebuild_databases(content_db_name, vector_db_name, delete_databases):
     vector_database = VectorDatabase('vector_database.vec')
     content_database = ContentDatabase('content_database.db')
 
-    for doc_id, doc_title, doc_path in document_metadata:
-        content_database.store_document_data(doc_id, doc_title, doc_path)
+    for documents in documents:
+        content_database.store_document_data(documents)
 
     #for sentence, doc_id, sentence_number, embedding in zip(final_sentences, final_doc_ids, final_sentence_numbers, final_embeddings):
 
@@ -67,7 +68,7 @@ def rebuild_databases(content_db_name, vector_db_name, delete_databases):
 ### Query the existing data from the databases ####################################################
 ###################################################################################################
    
-def get_similar_sentences(target_sentence: str, num_results: int =10):
+def get_similar_sentences(target_sentence: str, num_results: int = 10) -> List[SimilarSentence]:
     target_embedding = model.encode(target_sentence, convert_to_tensor=True)
 
     vector_database = VectorDatabase('vector_database.vec')
@@ -76,23 +77,22 @@ def get_similar_sentences(target_sentence: str, num_results: int =10):
     nearest_neighbors_ids, nearest_neighbors_distances = vector_database.get_nearest_neighbors_ids_and_distances(target_embedding, num_results)
 
     sentences_data = [content_database.get_sentence_data(int(identifier)) for identifier in nearest_neighbors_ids]
-    for sentence_data, nn_id, nn_dist in zip(sentences_data, nearest_neighbors_ids, nearest_neighbors_distances):
-        sentence_data['id'] = float(nn_id)
-        sentence_data['distance'] = float(nn_dist)
+    for sentence_data, nn_dist in zip(sentences_data, nearest_neighbors_distances):
+        sentence_data.distance = float(nn_dist)
 
     return sentences_data
 
-def get_documents_in_db() -> List[dict]:
+def get_documents_in_db() -> List[DBDocument]:
     content_database = ContentDatabase('content_database.db')
     documents_in_db = content_database.get_documents_in_db()
     result = []
-    for identifier, title, path in documents_in_db:
-        document_entry = { "identifier": identifier, "title": title, "path": path}
+    for id, title, path in documents_in_db:
+        document_entry = DBDocument(id=id, title=title, path=path) 
         result.append(document_entry)
 
     return result
 
-def get_document_content_by_id(document_id) -> List[dict]:
+def get_document_content_by_id(document_id: int) -> List[Sentence]:
     content_database = ContentDatabase('content_database.db')
     sentences = content_database.get_sentences_by_document_id(document_id)
     return sentences

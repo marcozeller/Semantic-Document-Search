@@ -8,8 +8,8 @@
 	function get_table_from_data(sourceData: any[]): TableSource {
 		const tableSimple: TableSource = {
 			head: ['ID', 'Document Title', 'Path on System'],
-			body: tableMapperValues(sourceData, ['identifier', 'title', 'path']),
-			meta: tableMapperValues(sourceData, ['identifier', 'title', 'path'])
+			body: tableMapperValues(sourceData, ['id', 'title', 'path']),
+			meta: tableMapperValues(sourceData, ['id', 'title', 'path'])
 		};
 		return tableSimple;
 	}

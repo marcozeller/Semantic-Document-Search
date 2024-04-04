@@ -7,6 +7,8 @@ from similarity_search import get_similar_sentences, get_documents_in_db, get_do
 from os import path, getcwd, makedirs, listdir
 from shutil import copyfileobj
 from starlette.exceptions import HTTPException as StarletteHTTPException
+from typing import List
+from interfaces import Sentence, SimilarSentence, Document
 
 # Some parameters which might be useful to change
 # Directory where the documents are stored and loaded from for the search.
@@ -46,11 +48,11 @@ async def front():
     return RedirectResponse(url='/ui')
 
 @app.get("/api/document/{document_id}")
-async def read_item(document_id: int):
+async def get_document_by_id(document_id: int) -> List[Sentence]:
     return get_document_content_by_id(document_id)
 
 @app.get("/api/similar-sentences")
-async def similar_sentences(number_results: int = 10, sentence: str = "No sentence provided"):
+async def similar_sentences(number_results: int = 10, sentence: str = "No sentence provided") -> List[SimilarSentence]:
     return get_similar_sentences(sentence, number_results)
 
 @app.post("/api/file")
@@ -78,26 +80,26 @@ async def create_upload_file(file: UploadFile):
     return {"filename": file.filename}
 
 @app.get("/api/documents")
-async def get_available_documents():
+async def get_available_documents() -> List[Document]:
     documents_dir = DOCUMENTS_DIRECTORY
     stored_documents = listdir(documents_dir) # Get all files in the directory
     stored_documents = filter(lambda x: x.endswith(".pdf"), stored_documents) # Filter for PDFs
-    stored_documents = map(lambda d: path.join(DOCUMENTS_DIRECTORY, d), stored_documents)
+    #stored_documents = map(lambda d: path.join(DOCUMENTS_DIRECTORY, d), stored_documents)
     stored_documents = list(stored_documents)
 
     documents_in_db = get_documents_in_db()
-    paths_in_db = {d['path'] for d in documents_in_db}
+    paths_in_db = {d.path for d in documents_in_db}
 
     result = []
 
     for document_path in stored_documents:
         if document_path in paths_in_db:
             continue
-        document_entry = {"identifier": None, "title": None, "path": document_path}
+        document_entry = Document(id=None, title=None, path=document_path)
         result.append(document_entry)
     
     # Remove documents which are already in the database
-    result = list(filter(lambda x: x["path"] not in documents_in_db, result))
+    result = list(filter(lambda x: x.path not in documents_in_db, result))
     # Add the documents which are already in the database with their addtionial information
     result += documents_in_db
     

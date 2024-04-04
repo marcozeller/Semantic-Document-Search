@@ -1,4 +1,6 @@
 from PyPDF2 import PdfReader
+from html2text import HTML2Text
+from bs4 import BeautifulSoup
 from config import DOCUMENTS_DIRECTORY
 from os import path, listdir
 from typing import List, Tuple
@@ -30,11 +32,24 @@ class FileProcessor:
 class PdfProcessor(FileProcessor):
     # Read text from a pdf file
     def read_full_text(self):
-        pdf_file = open(self.file_path, 'rb')
-        read_pdf = PdfReader(pdf_file)
+        with open(self.file_path, 'rb') as pdf_file:
+            read_pdf = PdfReader(pdf_file)
+            # concatenate all pages' text
+            self.full_text = " ".join([page.extract_text() for page in read_pdf.pages])
 
-        # concatenate all pages' text
-        self.full_text = " ".join([page.extract_text() for page in read_pdf.pages])
+class HtmlProcessor(FileProcessor):
+    # Read text from a html file
+    def read_full_text(self):
+        with open(self.file_path) as file:
+            html_text = file.read()
+
+        soup = BeautifulSoup(html_text, 'html.parser')
+
+        paragraphs = soup.find_all('p')
+        paragraphs = [paragraph.text.strip() for paragraph in paragraphs]
+        self.paragraphs = paragraphs
+        self.full_text = " ".join(paragraphs)
+
 
 ###################################################################################################
 ### Read and Process the Files ####################################################################
@@ -59,5 +74,11 @@ def read_pdfs_and_get_texts() -> Tuple[List[str], List[str], List[str]]:
     return file_paths, file_names, texts
 
 if __name__ == '__main__':
-    _, _, texts = read_pdfs_and_get_texts()
-    print(texts)
+    html_processor = HtmlProcessor('Software license - Wikipedia.html')
+    print(html_processor.file_path)
+    html_processor.read_full_text()
+    html_processor.clean_full_text()
+    for i, p in enumerate(html_processor.paragraphs):
+        print(i, p)
+    #_, _, texts = read_pdfs_and_get_texts()
+    #print(texts)

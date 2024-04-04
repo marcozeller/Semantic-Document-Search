@@ -1,6 +1,9 @@
 from os import path, makedirs
 from sqlite3 import connect
+import pandas as pd
+import pandera as pa
 from typing import List
+from interfaces import Sentence, SimilarSentence, DBDocument
 
 from config import DATABASES_DIRECTORY
 
@@ -73,9 +76,9 @@ class ContentDatabase:
         
         return [start_id + i for i in range(n_ids)]
     
-    def store_document_data(self, identifier: int, title: str, path: str):
+    def store_document_data(self, document: DBDocument):
         cur = self._con.cursor()
-        cur.execute("INSERT INTO document VALUES (?, ?, ?)", (identifier, title, path))
+        cur.execute("INSERT INTO document VALUES (?, ?, ?)", (document.id, document.title, document.title))
         self._con.commit()
         cur.close()
 
@@ -91,26 +94,29 @@ class ContentDatabase:
         self._con.commit()
         cur.close()
 
-    def get_sentence_data(self, identifier: int):
+    def get_sentence_data(self, id: int) -> Sentence:
         cur = self._con.cursor()
-        res = cur.execute("SELECT s.document_id, d.title, s.sentence_number, s.content FROM sentence s LEFT JOIN document d ON s.document_id = d.id WHERE s.id = ?", (identifier,))
-        document_id, document, sentence_number, content = res.fetchone()
-        return {'id': identifier,
-                'document_id': document_id,
-                'document': document,
-                'sentence_number': sentence_number,
-                'sentence_content': content,
-                }
+        res = cur.execute("SELECT s.document_id, d.title, s.sentence_number, s.content FROM sentence s LEFT JOIN document d ON s.document_id = d.id WHERE s.id = ?", (id,))
+        document_id, document_title, sentence_number, content = res.fetchone()
+        return SimilarSentence(id=id,
+                               document_id=document_id,
+                               document_title=document_title,
+                               sentence_number=sentence_number,
+                               content=content,
+                               distance=0.0)
 
-    def get_sentences_by_document_id(self, document_id: int) -> List[dict]:
+    def get_sentences_by_document_id(self, document_id: int) -> List[Sentence]:
         cur = self._con.cursor()
         res = cur.execute("SELECT id, sentence_number, content FROM sentence WHERE document_id = ? ORDER BY sentence_number", (document_id,))
         sentences = res.fetchall()
-        result = [{'id': id,
-                   'document_id': document_id,
-                   'sentence_number': sentence_number,
-                   'content': content
-                  }
-                 for id, sentence_number, content  in sentences]
+        result = [Sentence(id=id,
+                           document_id=document_id,
+                           sentence_number=sentence_number,
+                           content=content)
+                  for id, sentence_number, content in sentences]
         cur.close()
         return result
+
+if __name__ == '__main__':
+    content_database = ContentDatabase('content_database.db')
+    print(content_database.get_documents_in_db())

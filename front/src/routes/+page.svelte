@@ -18,7 +18,7 @@
 				'distance',
 				'document',
 				'sentence_number',
-				'sentence_content'
+				'content'
 			]),
 			// Optional: The data returned when interactive is enabled and a row is clicked.
 			meta: tableMapperValues(sourceData, ['document_id', 'sentence_number'])
