@@ -84,7 +84,7 @@ async def get_available_documents() -> List[Document]:
     documents_dir = DOCUMENTS_DIRECTORY
     stored_documents = listdir(documents_dir) # Get all files in the directory
     stored_documents = filter(lambda x: x.endswith(".pdf"), stored_documents) # Filter for PDFs
-    #stored_documents = map(lambda d: path.join(DOCUMENTS_DIRECTORY, d), stored_documents)
+    stored_documents = map(lambda d: path.join(DOCUMENTS_DIRECTORY, d), stored_documents)
     stored_documents = list(stored_documents)
 
     documents_in_db = get_documents_in_db()

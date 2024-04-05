@@ -78,7 +78,7 @@ class ContentDatabase:
     
     def store_document_data(self, document: DBDocument):
         cur = self._con.cursor()
-        cur.execute("INSERT INTO document VALUES (?, ?, ?)", (document.id, document.title, document.title))
+        cur.execute("INSERT INTO document VALUES (?, ?, ?)", (document.id, document.title, document.path))
         self._con.commit()
         cur.close()
 
